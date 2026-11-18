@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign Up – EcoTrack</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="app.js"></script>
+</head>
+<body class="auth-page">
+
+  <div class="auth-card">
+    <div class="auth-logo">
+      <span class="auth-logo-icon">🌿</span>
+      <span class="auth-logo-name">EcoTrack</span>
+    </div>
+    <h1 class="auth-title">Create Your Account</h1>
+    <p class="auth-subtitle">Join thousands tracking their eco impact — it's free!</p>
+
+    <div class="auth-error" id="authError"></div>
+
+    <form id="regForm" novalidate>
+      <div class="form-group">
+        <label class="form-label" for="name">Full Name</label>
+        <input type="text" id="name" class="form-input" placeholder="Jane Smith" autocomplete="name" required />
+        <span class="form-error" id="nameErr"></span>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="email">Email Address</label>
+        <input type="email" id="email" class="form-input" placeholder="jane@example.com" autocomplete="email" required />
+        <span class="form-error" id="emailErr"></span>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <div class="pw-toggle-wrap">
+          <input type="password" id="password" class="form-input" placeholder="Min. 6 characters" autocomplete="new-password" required />
+          <button type="button" class="pw-toggle" id="pwToggle" title="Show/hide password">👁</button>
+        </div>
+        <span class="form-error" id="pwErr"></span>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="confirmPw">Confirm Password</label>
+        <input type="password" id="confirmPw" class="form-input" placeholder="Repeat your password" autocomplete="new-password" required />
+        <span class="form-error" id="cpwErr"></span>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block mt-4" id="regBtn">Create Account 🌿</button>
+    </form>
+
+    <div class="auth-link">Already have an account? <a href="login.html">Log in</a></div>
+    <div class="auth-link" style="margin-top:8px;"><a href="index.html">← Back to home</a></div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      redirectIfLoggedIn();
+
+      const form    = document.getElementById('regForm');
+      const btn     = document.getElementById('regBtn');
+      const errBox  = document.getElementById('authError');
+      const pwInput = document.getElementById('password');
+      const pwToggle= document.getElementById('pwToggle');
+
+      pwToggle.addEventListener('click', () => {
+        const isText = pwInput.type === 'text';
+        pwInput.type = isText ? 'password' : 'text';
+        pwToggle.textContent = isText ? '👁' : '🙈';
+      });
+
+      function showErr(msg) { errBox.textContent = msg; errBox.style.display = 'block'; }
+      function hideErr()    { errBox.style.display = 'none'; }
+      function validateEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+
+      function clearErrors() {
+        ['nameErr','emailErr','pwErr','cpwErr'].forEach(id => {
+          document.getElementById(id).textContent = '';
+        });
+        hideErr();
+      }
+
+      form.addEventListener('submit', e => {
+        e.preventDefault();
+        clearErrors();
+
+        const name  = document.getElementById('name').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const pw    = document.getElementById('password').value;
+        const cpw   = document.getElementById('confirmPw').value;
+        let valid   = true;
+
+        if (!name || name.length < 2) {
+          document.getElementById('nameErr').textContent = 'Please enter your full name (at least 2 characters).';
+          valid = false;
+        }
+        if (!email) {
+          document.getElementById('emailErr').textContent = 'Email is required.';
+          valid = false;
+        } else if (!validateEmail(email)) {
+          document.getElementById('emailErr').textContent = 'Enter a valid email address.';
+          valid = false;
+        }
+        if (!pw || pw.length < 6) {
+          document.getElementById('pwErr').textContent = 'Password must be at least 6 characters.';
+          valid = false;
+        }
+        if (pw !== cpw) {
+          document.getElementById('cpwErr').textContent = 'Passwords do not match.';
+          valid = false;
+        }
+        if (!valid) return;
+
+        setLoadingBtn(btn, true, 'Create Account 🌿');
+        try {
+          registerUser(name, email, pw);
+          window.location.href = 'dashboard.html';
+        } catch (err) {
+          showErr(err.message);
+          setLoadingBtn(btn, false, 'Create Account 🌿');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

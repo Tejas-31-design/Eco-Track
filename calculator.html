@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Carbon Calculator – EcoTrack</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="app.js"></script>
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-logo">🌿</span>
+      <span class="sidebar-brand">EcoTrack</span>
+    </div>
+    <div class="sidebar-user">
+      <span class="user-avatar">👤</span>
+      <span class="user-name" id="sidebarUserName">Loading…</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html"  class="sidebar-link">🏠 Dashboard</a>
+      <a href="calculator.html" class="sidebar-link active">🧮 Carbon Calculator</a>
+      <a href="habits.html"     class="sidebar-link">🌱 Eco Habits</a>
+      <a href="progress.html"   class="sidebar-link">📊 My Progress</a>
+      <a href="rewards.html"    class="sidebar-link">🏆 Rewards</a>
+    </nav>
+    <button class="sidebar-logout" onclick="logout()">🚪 Logout</button>
+  </aside>
+  <header class="mobile-header">
+    <button class="hamburger" id="hamburger">☰</button>
+    <span class="mobile-brand">🌿 EcoTrack</span>
+  </header>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- MAIN -->
+  <main class="main-content">
+    <h1 class="page-title">🧮 Carbon Footprint Calculator</h1>
+    <p class="page-subtitle">Enter your daily usage to calculate your CO₂ emissions (IPCC/EPA emission factors).</p>
+
+    <div class="calc-layout">
+      <!-- Form -->
+      <div class="calc-form-card">
+        <form id="calcForm" novalidate>
+
+          <h3 style="margin-bottom:16px;color:var(--primary-darker);">⚡ Electricity</h3>
+          <div class="form-group">
+            <label class="form-label" for="electricity">Daily electricity usage (kWh)</label>
+            <input type="number" id="electricity" class="form-input" placeholder="e.g. 10" min="0" max="1000" step="0.1" />
+            <span class="form-hint">Average home: 20–30 kWh/day</span>
+          </div>
+
+          <h3 style="margin:20px 0 16px;color:var(--primary-darker);">🚗 Travel</h3>
+          <div class="form-group">
+            <label class="form-label" for="distance">Daily travel distance (km)</label>
+            <input type="number" id="distance" class="form-input" placeholder="e.g. 20" min="0" max="2000" step="0.1" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="travelMode">Primary travel method</label>
+            <select id="travelMode" class="form-input">
+              <option value="car">🚗 Petrol/Diesel Car</option>
+              <option value="ev">🔋 Electric Vehicle</option>
+              <option value="bus">🚌 Bus / Public Transport</option>
+              <option value="train">🚆 Train / Metro</option>
+              <option value="bike">🚲 Bicycle / Walking</option>
+            </select>
+          </div>
+
+          <h3 style="margin:20px 0 16px;color:var(--primary-darker);">🗑️ Waste</h3>
+          <div class="form-group">
+            <label class="form-label" for="waste">Daily waste generated (kg)</label>
+            <input type="number" id="waste" class="form-input" placeholder="e.g. 1.5" min="0" max="100" step="0.1" />
+            <span class="form-hint">Average person: 1–2 kg/day</span>
+          </div>
+
+          <div style="display:flex;gap:12px;margin-top:24px;">
+            <button type="submit" class="btn btn-primary" id="calcBtn" style="flex:1;">Calculate 🌱</button>
+            <button type="button" class="btn btn-secondary" onclick="resetCalc()">Reset</button>
+          </div>
+
+          <p style="font-size:.78rem;color:var(--gray-400);margin-top:14px;text-align:center;">
+            Emission factors: Electricity 0.42 kg/kWh · Car 0.21 kg/km · EV 0.07 kg/km · Bus 0.089 kg/km · Train 0.041 kg/km
+          </p>
+        </form>
+      </div>
+
+      <!-- Result panel -->
+      <div class="calc-result-card">
+        <div id="resultPlaceholder" style="text-align:center;padding:40px 0;color:var(--gray-400);">
+          <div style="font-size:3rem;margin-bottom:12px;">🌿</div>
+          <p>Fill in the form and click <strong>Calculate</strong> to see your carbon footprint.</p>
+        </div>
+
+        <div id="resultPanel" style="display:none;">
+          <div class="result-total">
+            <span class="num" id="rTotal">0.00</span>
+            <div class="lbl">kg CO₂ per day</div>
+            <div style="font-size:.82rem;color:var(--gray-400);margin-top:4px;" id="rAnnual"></div>
+          </div>
+
+          <div class="result-breakdown">
+            <div class="breakdown-row">
+              <span>⚡ Electricity</span>
+              <strong id="rElec">0.00 kg</strong>
+            </div>
+            <div class="breakdown-row">
+              <span>🚗 Travel</span>
+              <strong id="rTravel">0.00 kg</strong>
+            </div>
+            <div class="breakdown-row">
+              <span>🗑️ Waste</span>
+              <strong id="rWaste">0.00 kg</strong>
+            </div>
+          </div>
+
+          <div class="result-rating" id="rRating"></div>
+
+          <button class="btn btn-primary btn-block" id="saveResultBtn" onclick="saveResult()">💾 Save Result</button>
+        </div>
+
+        <!-- History -->
+        <div class="calc-history" id="calcHistory" style="margin-top:20px;"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  /* ── Emission factors (IPCC/EPA) ── */
+  const EF = {
+    electricity: 0.42,  // kg CO₂ per kWh
+    car:   0.21,        // kg CO₂ per km
+    ev:    0.07,
+    bus:   0.089,
+    train: 0.041,
+    bike:  0,
+  };
+
+  let lastResult = null;
+
+  requireAuth(user => {
+    loadHistory(user.uid);
+
+    document.getElementById('calcForm').addEventListener('submit', e => {
+      e.preventDefault();
+
+      const elec   = parseFloat(document.getElementById('electricity').value) || 0;
+      const dist   = parseFloat(document.getElementById('distance').value)    || 0;
+      const mode   = document.getElementById('travelMode').value;
+      const waste  = parseFloat(document.getElementById('waste').value)       || 0;
+
+      const co2Elec    = elec  * EF.electricity;
+      const co2Travel  = dist  * (EF[mode] || 0);
+      const co2Waste   = waste * 0.50;
+      const co2Daily   = co2Elec + co2Travel + co2Waste;
+      const co2Annual  = co2Daily * 365;
+
+      lastResult = { electricity: elec, distance: dist, mode, waste, co2Elec, co2Travel, co2Waste, co2Daily, co2Annual, date: getToday(), ts: Date.now() };
+
+      // Show result
+      document.getElementById('resultPlaceholder').style.display = 'none';
+      document.getElementById('resultPanel').style.display       = 'block';
+
+      document.getElementById('rTotal').textContent  = co2Daily.toFixed(2);
+      document.getElementById('rElec').textContent   = co2Elec.toFixed(2) + ' kg';
+      document.getElementById('rTravel').textContent = co2Travel.toFixed(2) + ' kg';
+      document.getElementById('rWaste').textContent  = co2Waste.toFixed(2) + ' kg';
+      document.getElementById('rAnnual').textContent = `≈ ${co2Annual.toFixed(0)} kg CO₂ per year`;
+
+      const rRating = document.getElementById('rRating');
+      if (co2Daily < 5) {
+        rRating.className = 'result-rating rating-low';
+        rRating.textContent = '🟢 Low Impact — Great job! You are well below average.';
+      } else if (co2Daily < 15) {
+        rRating.className = 'result-rating rating-medium';
+        rRating.textContent = '🟡 Moderate Impact — Room to improve. Try reducing travel or energy use.';
+      } else {
+        rRating.className = 'result-rating rating-high';
+        rRating.textContent = '🔴 High Impact — Consider switching to public transport or renewable energy.';
+      }
+
+      document.getElementById('saveResultBtn').disabled = false;
+      document.getElementById('saveResultBtn').textContent = '💾 Save Result';
+    });
+  });
+
+  function saveResult() {
+    const user = getCurrentUser();
+    if (!user || !lastResult) return;
+
+    addCarbonLog(user.uid, lastResult);
+    updateUserData(user.uid, { carbonFootprint: lastResult.co2Daily });
+
+    document.getElementById('saveResultBtn').textContent = '✅ Saved!';
+    document.getElementById('saveResultBtn').disabled    = true;
+
+    loadHistory(user.uid);
+    showToast('Carbon footprint saved to your profile!', 'success');
+  }
+
+  function resetCalc() {
+    document.getElementById('calcForm').reset();
+    document.getElementById('resultPlaceholder').style.display = 'block';
+    document.getElementById('resultPanel').style.display       = 'none';
+    lastResult = null;
+  }
+
+  function loadHistory(uid) {
+    const logs = getCarbonLogs(uid);
+    const wrap = document.getElementById('calcHistory');
+    if (!logs.length) { wrap.innerHTML = ''; return; }
+
+    wrap.innerHTML = '<div class="card-title" style="margin-bottom:12px;">📋 Calculation History</div>';
+    logs.slice(0, 5).forEach(log => {
+      const modeLabels = { car:'Car', ev:'EV', bus:'Bus', train:'Train', bike:'Bike/Walk' };
+      wrap.innerHTML += `
+        <div class="history-item">
+          <span>${formatDate(log.date)} · ${modeLabels[log.mode] || log.mode}</span>
+          <strong>${log.co2Daily.toFixed(2)} kg/day</strong>
+        </div>`;
+    });
+  }
+</script>
+</body>
+</html>

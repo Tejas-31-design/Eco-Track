@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard – EcoTrack</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="app.js"></script>
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-logo">🌿</span>
+      <span class="sidebar-brand">EcoTrack</span>
+    </div>
+    <div class="sidebar-user">
+      <span class="user-avatar">👤</span>
+      <span class="user-name" id="sidebarUserName">Loading…</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html"  class="sidebar-link active">🏠 Dashboard</a>
+      <a href="calculator.html" class="sidebar-link">🧮 Carbon Calculator</a>
+      <a href="habits.html"     class="sidebar-link">🌱 Eco Habits</a>
+      <a href="progress.html"   class="sidebar-link">📊 My Progress</a>
+      <a href="rewards.html"    class="sidebar-link">🏆 Rewards</a>
+    </nav>
+    <button class="sidebar-logout" onclick="logout()">🚪 Logout</button>
+  </aside>
+
+  <header class="mobile-header">
+    <button class="hamburger" id="hamburger">☰</button>
+    <span class="mobile-brand">🌿 EcoTrack</span>
+  </header>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- MAIN -->
+  <main class="main-content">
+
+    <!-- Welcome banner -->
+    <div class="welcome-banner">
+      <div class="welcome-text">
+        <h2 id="welcomeMsg">Welcome back! 👋</h2>
+        <p id="welcomeSub">Here's your environmental impact summary.</p>
+      </div>
+      <div class="welcome-badge">
+        <span class="bi" id="wbIcon">🌱</span>
+        <span class="bn" id="wbName">Eco Starter</span>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">🏆</div>
+        <div class="stat-label">Total Eco Points</div>
+        <div class="stat-value" id="statPoints">0</div>
+        <div class="stat-sub"   id="statBadge">🌱 Eco Starter</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🌫️</div>
+        <div class="stat-label">Carbon Footprint</div>
+        <div class="stat-value" id="statCarbon">–</div>
+        <div class="stat-sub">kg CO₂ per day</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">✅</div>
+        <div class="stat-label">Activities Today</div>
+        <div class="stat-value" id="statActivities">0</div>
+        <div class="stat-sub">out of 6 habits</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📅</div>
+        <div class="stat-label">Days Tracking</div>
+        <div class="stat-value" id="statDays">0</div>
+        <div class="stat-sub"   id="statSince">Just started!</div>
+      </div>
+    </div>
+
+    <!-- Middle grid -->
+    <div class="dash-grid">
+      <!-- Recent activity -->
+      <div class="card">
+        <div class="card-title">⚡ Recent Activity</div>
+        <div id="activityFeed">
+          <p style="color:var(--gray-400);font-size:.88rem;text-align:center;padding:20px 0;">
+            No activity yet. <a href="habits.html" style="color:var(--primary-dark);font-weight:600;">Start today!</a>
+          </p>
+        </div>
+      </div>
+      <!-- Quick actions -->
+      <div class="card">
+        <div class="card-title">🚀 Quick Actions</div>
+        <div class="quick-actions">
+          <a href="calculator.html" class="quick-action"><span class="quick-action-icon">🧮</span>Calculate CO₂</a>
+          <a href="habits.html"     class="quick-action"><span class="quick-action-icon">🌱</span>Log Habits</a>
+          <a href="progress.html"   class="quick-action"><span class="quick-action-icon">📊</span>View Progress</a>
+          <a href="rewards.html"    class="quick-action"><span class="quick-action-icon">🏆</span>My Rewards</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Environmental Progress -->
+    <div class="card mt-6">
+      <div class="card-title">🌍 Environmental Progress</div>
+      <div class="progress-bar-wrap">
+        <div class="progress-label">
+          <span>Today's Habit Completion</span>
+          <span id="progPct">0%</span>
+        </div>
+        <div class="progress-track"><div class="progress-fill" id="progFill" style="width:0%"></div></div>
+      </div>
+      <div class="progress-bar-wrap" style="margin-top:16px;">
+        <div class="progress-label">
+          <span>Badge Progress (to next level)</span>
+          <span id="badgePct">0%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="badgeFill" style="width:0%;background:linear-gradient(90deg,#f59e0b,#f97316)"></div>
+        </div>
+      </div>
+      <p style="font-size:.82rem;color:var(--gray-400);margin-top:10px;" id="nextBadgeTip"></p>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  requireAuth(user => {
+    const name = user.name || user.email.split('@')[0];
+    document.getElementById('welcomeMsg').textContent = `Welcome back, ${name}! 👋`;
+
+    const data   = getUserData(user.uid);
+    const pts    = data.totalPoints    || 0;
+    const co2    = data.carbonFootprint|| 0;
+    const badge  = getCurrentBadge(pts);
+
+    // Stats
+    document.getElementById('statPoints').textContent     = pts.toLocaleString();
+    document.getElementById('statBadge').textContent      = badge.icon + ' ' + badge.label;
+    document.getElementById('statCarbon').textContent     = co2 ? co2.toFixed(2) : '–';
+    document.getElementById('wbIcon').textContent         = badge.icon;
+    document.getElementById('wbName').textContent         = badge.label;
+
+    // Days tracking
+    const days = Math.floor((Date.now() - (data.createdAt || Date.now())) / 86400000);
+    document.getElementById('statDays').textContent   = days;
+    document.getElementById('statSince').textContent  = days === 0 ? 'Just started!' : `Tracking for ${days} day${days !== 1 ? 's' : ''}`;
+    document.getElementById('welcomeSub').textContent = days === 0 ? 'Welcome! Start tracking your impact.' : `${days} day${days !== 1 ? 's' : ''} of eco tracking. Keep it up!`;
+
+    // Today's habits
+    const today   = getToday();
+    const habitLog = getHabitLogForDate(user.uid, today);
+    const done    = habitLog ? (habitLog.completedCount || 0) : 0;
+    document.getElementById('statActivities').textContent = done;
+
+    const pct = Math.round(done / 6 * 100);
+    document.getElementById('progPct').textContent   = pct + '%';
+    document.getElementById('progFill').style.width  = pct + '%';
+
+    // Badge progress
+    const next = getNextBadge(pts);
+    if (next) {
+      const range = next.minPts - badge.minPts;
+      const prog  = pts - badge.minPts;
+      const bPct  = range > 0 ? Math.min(Math.round(prog / range * 100), 100) : 100;
+      document.getElementById('badgePct').textContent  = bPct + '%';
+      document.getElementById('badgeFill').style.width = bPct + '%';
+      document.getElementById('nextBadgeTip').textContent =
+        `${next.icon} ${(next.minPts - pts).toLocaleString()} more points to unlock "${next.label}"`;
+    } else {
+      document.getElementById('badgePct').textContent  = '100%';
+      document.getElementById('badgeFill').style.width = '100%';
+      document.getElementById('nextBadgeTip').textContent = '🏆 Maximum rank achieved — Planet Guardian!';
+    }
+
+    // Activity feed — last 5 days with habit logs
+    const logs = getHabitLogs(user.uid);
+    const sortedDates = Object.keys(logs).sort((a, b) => b.localeCompare(a)).slice(0, 5);
+    if (sortedDates.length > 0) {
+      const feed = document.getElementById('activityFeed');
+      feed.innerHTML = '';
+      sortedDates.forEach(d => {
+        const log = logs[d];
+        feed.innerHTML += `
+          <div class="activity-item">
+            <span class="activity-item-icon">🌱</span>
+            <div class="activity-item-info">
+              <strong>${log.completedCount || 0} habit${(log.completedCount || 0) !== 1 ? 's' : ''} completed</strong>
+              <span>${formatDate(d)}</span>
+            </div>
+            <span class="activity-item-pts">+${log.pointsEarned || 0} pts</span>
+          </div>`;
+      });
+    }
+  });
+</script>
+</body>
+</html>

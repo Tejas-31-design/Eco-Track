@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eco Habits – EcoTrack</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="app.js"></script>
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-logo">🌿</span>
+      <span class="sidebar-brand">EcoTrack</span>
+    </div>
+    <div class="sidebar-user">
+      <span class="user-avatar">👤</span>
+      <span class="user-name" id="sidebarUserName">Loading…</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html"  class="sidebar-link">🏠 Dashboard</a>
+      <a href="calculator.html" class="sidebar-link">🧮 Carbon Calculator</a>
+      <a href="habits.html"     class="sidebar-link active">🌱 Eco Habits</a>
+      <a href="progress.html"   class="sidebar-link">📊 My Progress</a>
+      <a href="rewards.html"    class="sidebar-link">🏆 Rewards</a>
+    </nav>
+    <button class="sidebar-logout" onclick="logout()">🚪 Logout</button>
+  </aside>
+  <header class="mobile-header">
+    <button class="hamburger" id="hamburger">☰</button>
+    <span class="mobile-brand">🌿 EcoTrack</span>
+  </header>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- MAIN -->
+  <main class="main-content">
+
+    <!-- Page Header -->
+    <div class="habits-header">
+      <div>
+        <h1 class="page-title">🌱 Daily Eco Habits</h1>
+        <div class="habits-date" id="todayDate">Loading…</div>
+      </div>
+      <div class="habits-points-display">
+        <span class="pts-icon">⭐</span>
+        <span class="pts-num" id="todayPts">0</span>
+        <span class="pts-label">pts today</span>
+      </div>
+    </div>
+
+    <p style="color:var(--gray-500);margin-bottom:20px;font-size:.95rem;">
+      Tap each habit you completed today, then save to earn your points! 🌍
+    </p>
+
+    <!-- Habit Cards -->
+    <div class="habits-grid" id="habitsGrid"></div>
+
+    <!-- Action Buttons -->
+    <div class="habits-actions" id="habitActions">
+      <button class="btn btn-primary" id="saveBtn" onclick="saveHabits()">💾 Save Today's Habits</button>
+      <button class="btn btn-secondary" id="resetBtn" onclick="resetHabits()">🔄 Reset</button>
+    </div>
+
+    <!-- Summary -->
+    <div class="habits-summary">
+      <div class="summary-top">
+        <span>Today's Progress</span>
+        <span class="summary-count" id="summaryCount">0 / 6 habits</span>
+      </div>
+      <div class="progress-bar-wrap2">
+        <div class="progress-bar-fill2" id="progressFill" style="width:0%"></div>
+      </div>
+      <div class="summary-msg" id="summaryMsg">Select the habits you completed today and save your progress.</div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  /* ── Habits data ── */
+  const HABITS = [
+    { id:'bottle',    name:'Use a Reusable Water Bottle', desc:'Avoid single-use plastic bottles.',       icon:'💧', pts:10 },
+    { id:'plastic',   name:'Avoid Plastic Bags',          desc:'Use cloth bags or refuse plastic bags.',  icon:'🛍️', pts:10 },
+    { id:'electric',  name:'Save Electricity',            desc:'Turn off lights and unplug devices.',    icon:'💡', pts:15 },
+    { id:'water',     name:'Save Water',                  desc:'Shorter showers, turn off taps.',         icon:'🚿', pts:15 },
+    { id:'transport', name:'Use Public Transport',        desc:'Bus, train, or cycle instead of a car.', icon:'🚌', pts:20 },
+    { id:'trees',     name:'Plant or Protect Trees',      desc:'Plant a tree or support reforestation.', icon:'🌳', pts:25 },
+  ];
+
+  let habitStates = {};
+  let alreadySaved = false;
+  let currentUser  = null;
+
+  /* ── Helpers ── */
+  function calcPts()      { return HABITS.reduce((s, h) => s + (habitStates[h.id] ? h.pts : 0), 0); }
+  function countDone()    { return HABITS.filter(h => habitStates[h.id]).length; }
+
+  /* ── Render ── */
+  function renderGrid() {
+    const grid = document.getElementById('habitsGrid');
+    grid.innerHTML = '';
+    HABITS.forEach(h => {
+      const checked = !!habitStates[h.id];
+      const div = document.createElement('div');
+      div.className = 'habit-item' + (checked ? ' completed' : '') + (alreadySaved ? ' saved' : '');
+      div.id = 'habit-' + h.id;
+      div.innerHTML = `
+        <div class="habit-checkbox">${checked ? '✓' : ''}</div>
+        <div style="font-size:1.8rem;flex-shrink:0;">${h.icon}</div>
+        <div class="habit-info">
+          <div class="habit-name">${h.name}</div>
+          <div class="habit-desc">${h.desc}</div>
+        </div>
+        <span class="habit-pts">+${h.pts} pts</span>`;
+      if (!alreadySaved) div.addEventListener('click', () => toggleHabit(h.id));
+      grid.appendChild(div);
+    });
+    updateSummary();
+  }
+
+  function updateSummary() {
+    const done = countDone();
+    const pts  = calcPts();
+    document.getElementById('todayPts').textContent      = pts;
+    document.getElementById('summaryCount').textContent  = `${done} / 6 habits`;
+    document.getElementById('progressFill').style.width  = `${(done/6)*100}%`;
+
+    let msg = 'Select the habits you completed today and save your progress.';
+    if (alreadySaved) {
+      msg = done === 6 ? '🎉 Perfect day! You completed all 6 eco habits!' :
+            done > 0  ? `✅ Saved! You completed ${done} out of 6 habits today.` :
+                        '📝 Habits saved — no habits completed today.';
+    } else if (done === 0) {
+      msg = 'Tap on any habit you completed today to mark it! 👆';
+    } else if (done === 6) {
+      msg = '🎉 All habits selected! Save to earn your ' + pts + ' points!';
+    } else {
+      msg = `${done} habit${done>1?'s':''} selected — ${95-done*5+done} pts. Keep going!`;
+      msg = `${done} habit${done>1?'s':''} selected (${pts} pts). Keep going — ${6-done} more to go!`;
+    }
+    document.getElementById('summaryMsg').textContent = msg;
+  }
+
+  /* ── Toggle ── */
+  function toggleHabit(id) {
+    if (alreadySaved) return;
+    habitStates[id] = !habitStates[id];
+    const item = document.getElementById('habit-' + id);
+    const box  = item.querySelector('.habit-checkbox');
+    if (habitStates[id]) { item.classList.add('completed');    box.textContent = '✓'; }
+    else                 { item.classList.remove('completed'); box.textContent = '';  }
+    updateSummary();
+  }
+
+  /* ── Save ── */
+  function saveHabits() {
+    if (alreadySaved || !currentUser) return;
+
+    const today   = getToday();
+    const pts     = calcPts();
+    const done    = countDone();
+    const habitsObj = {};
+    HABITS.forEach(h => { habitsObj[h.id] = !!habitStates[h.id]; });
+
+    // Save habit log
+    saveHabitLog(currentUser.uid, today, {
+      date: today, habits: habitsObj,
+      completedCount: done, pointsEarned: pts, savedAt: Date.now(),
+    });
+
+    // Update user totals
+    incrementUserPoints(currentUser.uid, pts);
+    updateUserData(currentUser.uid, { activitiesToday: done });
+
+    // Lock UI
+    alreadySaved = true;
+    const saveBtn = document.getElementById('saveBtn');
+    saveBtn.textContent = '✅ Habits Saved for Today!';
+    saveBtn.disabled = true;
+    document.getElementById('resetBtn').style.display = 'none';
+    document.querySelectorAll('.habit-item').forEach(el => el.classList.add('saved'));
+
+    updateSummary();
+    showToast(`🌱 Saved! You earned ${pts} eco points today!`, 'success');
+  }
+
+  /* ── Reset (before saving) ── */
+  function resetHabits() {
+    if (alreadySaved) return;
+    HABITS.forEach(h => { habitStates[h.id] = false; });
+    renderGrid();
+    showToast('Habits reset.', 'info');
+  }
+
+  /* ── Init ── */
+  requireAuth(user => {
+    currentUser = user;
+    const today = getToday();
+    document.getElementById('todayDate').textContent =
+      new Date(today + 'T00:00:00').toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+    // Init states
+    HABITS.forEach(h => { habitStates[h.id] = false; });
+
+    // Load today's log if it exists
+    const log = getHabitLogForDate(user.uid, today);
+    if (log) {
+      HABITS.forEach(h => { habitStates[h.id] = !!log.habits?.[h.id]; });
+      alreadySaved = true;
+      const saveBtn = document.getElementById('saveBtn');
+      saveBtn.textContent = '✅ Habits Saved for Today!';
+      saveBtn.disabled = true;
+      document.getElementById('resetBtn').style.display = 'none';
+    }
+
+    renderGrid();
+
+    if (alreadySaved) {
+      showToast('You already logged habits today!', 'info');
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Log In – EcoTrack</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="app.js"></script>
+</head>
+<body class="auth-page">
+
+  <div class="auth-card">
+    <div class="auth-logo">
+      <span class="auth-logo-icon">🌿</span>
+      <span class="auth-logo-name">EcoTrack</span>
+    </div>
+    <h1 class="auth-title">Welcome Back</h1>
+    <p class="auth-subtitle">Log in to continue your eco journey</p>
+
+    <div class="auth-error" id="authError"></div>
+
+    <form id="loginForm" novalidate>
+      <div class="form-group">
+        <label class="form-label" for="email">Email Address</label>
+        <input type="email" id="email" class="form-input" placeholder="jane@example.com" autocomplete="email" required />
+        <span class="form-error" id="emailErr"></span>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <div class="pw-toggle-wrap">
+          <input type="password" id="password" class="form-input" placeholder="Your password" autocomplete="current-password" required />
+          <button type="button" class="pw-toggle" id="pwToggle" title="Show/hide password">👁</button>
+        </div>
+        <span class="form-error" id="pwErr"></span>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block mt-4" id="loginBtn">Log In</button>
+    </form>
+
+    <div class="auth-link">Don't have an account? <a href="register.html">Sign up free</a></div>
+    <div class="auth-link" style="margin-top:8px;"><a href="index.html">← Back to home</a></div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Redirect if already logged in
+      redirectIfLoggedIn();
+
+      const form    = document.getElementById('loginForm');
+      const btn     = document.getElementById('loginBtn');
+      const errBox  = document.getElementById('authError');
+      const pwInput = document.getElementById('password');
+      const pwToggle= document.getElementById('pwToggle');
+
+      // Show/hide password
+      pwToggle.addEventListener('click', () => {
+        const isText = pwInput.type === 'text';
+        pwInput.type = isText ? 'password' : 'text';
+        pwToggle.textContent = isText ? '👁' : '🙈';
+      });
+
+      function showErr(msg) {
+        errBox.textContent = msg;
+        errBox.style.display = 'block';
+      }
+      function hideErr() { errBox.style.display = 'none'; }
+
+      function validateEmail(v) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+      }
+
+      form.addEventListener('submit', e => {
+        e.preventDefault();
+        hideErr();
+
+        const email = document.getElementById('email').value.trim();
+        const pw    = document.getElementById('password').value;
+        let valid   = true;
+
+        document.getElementById('emailErr').textContent = '';
+        document.getElementById('pwErr').textContent    = '';
+
+        if (!email) {
+          document.getElementById('emailErr').textContent = 'Email is required.';
+          valid = false;
+        } else if (!validateEmail(email)) {
+          document.getElementById('emailErr').textContent = 'Enter a valid email address.';
+          valid = false;
+        }
+        if (!pw) {
+          document.getElementById('pwErr').textContent = 'Password is required.';
+          valid = false;
+        }
+        if (!valid) return;
+
+        setLoadingBtn(btn, true, 'Log In');
+        try {
+          loginUser(email, pw);
+          window.location.href = 'dashboard.html';
+        } catch (err) {
+          showErr(err.message);
+          setLoadingBtn(btn, false, 'Log In');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

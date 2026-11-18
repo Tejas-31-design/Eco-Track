@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Progress – EcoTrack</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="app.js"></script>
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-logo">🌿</span>
+      <span class="sidebar-brand">EcoTrack</span>
+    </div>
+    <div class="sidebar-user">
+      <span class="user-avatar">👤</span>
+      <span class="user-name" id="sidebarUserName">Loading…</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html"  class="sidebar-link">🏠 Dashboard</a>
+      <a href="calculator.html" class="sidebar-link">🧮 Carbon Calculator</a>
+      <a href="habits.html"     class="sidebar-link">🌱 Eco Habits</a>
+      <a href="progress.html"   class="sidebar-link active">📊 My Progress</a>
+      <a href="rewards.html"    class="sidebar-link">🏆 Rewards</a>
+    </nav>
+    <button class="sidebar-logout" onclick="logout()">🚪 Logout</button>
+  </aside>
+  <header class="mobile-header">
+    <button class="hamburger" id="hamburger">☰</button>
+    <span class="mobile-brand">🌿 EcoTrack</span>
+  </header>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- MAIN -->
+  <main class="main-content">
+    <h1 class="page-title">📊 My Progress</h1>
+    <p class="page-subtitle">Your eco-journey over the past 7 days at a glance.</p>
+
+    <!-- Weekly summary stats -->
+    <div class="weekly-summary">
+      <div class="week-stat">
+        <div class="ws-icon">📅</div>
+        <span class="ws-num" id="wsDays">0</span>
+        <span class="ws-label">Days Tracked</span>
+      </div>
+      <div class="week-stat">
+        <div class="ws-icon">⭐</div>
+        <span class="ws-num" id="wsPts">0</span>
+        <span class="ws-label">Points Earned</span>
+      </div>
+      <div class="week-stat">
+        <div class="ws-icon">✅</div>
+        <span class="ws-num" id="wsHabits">0</span>
+        <span class="ws-label">Habits Done</span>
+      </div>
+      <div class="week-stat">
+        <div class="ws-icon">📈</div>
+        <span class="ws-num" id="wsAvg">0</span>
+        <span class="ws-label">Avg / Day</span>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="progress-grid">
+      <div class="chart-card">
+        <h3>⭐ Points Per Day (Last 7 Days)</h3>
+        <canvas id="pointsChart"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>🌱 Habits Per Day (Last 7 Days)</h3>
+        <canvas id="habitsChart"></canvas>
+      </div>
+    </div>
+
+    <!-- History table -->
+    <div class="card">
+      <div class="card-title">📋 7-Day Activity Log</div>
+      <div id="historyWrap">
+        <div class="no-data-msg">Loading activity log…</div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  requireAuth(user => {
+    const days   = getLastNDays(7);
+    const labels = days.map(d => shortDate(d));
+    const logs   = getHabitLogsForDays(user.uid, days);
+
+    /* Arrays */
+    const ptsArr    = days.map(d => logs[d]?.pointsEarned   || 0);
+    const habitsArr = days.map(d => logs[d]?.completedCount || 0);
+
+    /* Weekly stats */
+    const daysTracked  = Object.keys(logs).length;
+    const weeklyPts    = ptsArr.reduce((a,b) => a+b, 0);
+    const weeklyHabits = habitsArr.reduce((a,b) => a+b, 0);
+    const avgHabits    = daysTracked > 0 ? (weeklyHabits / daysTracked).toFixed(1) : '0';
+
+    document.getElementById('wsDays').textContent   = daysTracked;
+    document.getElementById('wsPts').textContent    = weeklyPts;
+    document.getElementById('wsHabits').textContent = weeklyHabits;
+    document.getElementById('wsAvg').textContent    = avgHabits;
+
+    /* Charts */
+    const chartDefaults = {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, ticks: { color:'#94a3b8' }, grid: { color:'rgba(0,0,0,.04)' } },
+        x: { ticks: { color:'#94a3b8' }, grid: { display: false } },
+      },
+    };
+
+    new Chart(document.getElementById('pointsChart').getContext('2d'), {
+      type: 'bar',
+      data: { labels, datasets: [{ data: ptsArr, backgroundColor: 'rgba(34,197,94,.8)', borderRadius: 6, borderSkipped: false }] },
+      options: { ...chartDefaults },
+    });
+
+    new Chart(document.getElementById('habitsChart').getContext('2d'), {
+      type: 'bar',
+      data: { labels, datasets: [{ data: habitsArr, backgroundColor: 'rgba(59,130,246,.75)', borderRadius: 6, borderSkipped: false }] },
+      options: { ...chartDefaults, scales: { ...chartDefaults.scales, y: { ...chartDefaults.scales.y, max: 6, ticks: { stepSize: 1, color:'#94a3b8' } } } },
+    });
+
+    /* History table */
+    const reversed = [...days].reverse();
+    const wrap = document.getElementById('historyWrap');
+
+    if (!daysTracked) {
+      wrap.innerHTML = '<div class="no-data-msg">No habit logs yet. <a href="habits.html" style="color:var(--primary-dark);font-weight:600;">Start tracking!</a></div>';
+      return;
+    }
+
+    const rows = reversed.map(d => {
+      const log  = logs[d];
+      const done = log ? log.completedCount : null;
+      const pts  = log ? log.pointsEarned   : null;
+      const pct  = done !== null ? Math.round(done / 6 * 100) : 0;
+
+      return `<tr>
+        <td>${formatDate(d)}</td>
+        <td>${done !== null ? `
+          <span class="tbl-bar">
+            ${done}/6
+            <span class="tbl-bar-track"><span class="tbl-bar-fill" style="width:${pct}%"></span></span>
+          </span>` : '–'}</td>
+        <td>${pts !== null ? `+${pts} pts` : '–'}</td>
+        <td>${done !== null
+          ? `<span class="pill ${done === 6 ? 'pill-green' : 'pill-gray'}">${done === 6 ? '🌟 Perfect' : done > 0 ? '✅ Partial' : '❌ Missed'}</span>`
+          : '<span class="pill pill-gray">–</span>'}</td>
+      </tr>`;
+    }).join('');
+
+    wrap.innerHTML = `
+      <table class="history-table">
+        <thead><tr><th>Date</th><th>Habits Completed</th><th>Points</th><th>Status</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  });
+</script>
+</body>
+</html>

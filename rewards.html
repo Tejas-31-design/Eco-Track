@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rewards – EcoTrack</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="app.js"></script>
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-logo">🌿</span>
+      <span class="sidebar-brand">EcoTrack</span>
+    </div>
+    <div class="sidebar-user">
+      <span class="user-avatar">👤</span>
+      <span class="user-name" id="sidebarUserName">Loading…</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html"  class="sidebar-link">🏠 Dashboard</a>
+      <a href="calculator.html" class="sidebar-link">🧮 Carbon Calculator</a>
+      <a href="habits.html"     class="sidebar-link">🌱 Eco Habits</a>
+      <a href="progress.html"   class="sidebar-link">📊 My Progress</a>
+      <a href="rewards.html"    class="sidebar-link active">🏆 Rewards</a>
+    </nav>
+    <button class="sidebar-logout" onclick="logout()">🚪 Logout</button>
+  </aside>
+  <header class="mobile-header">
+    <button class="hamburger" id="hamburger">☰</button>
+    <span class="mobile-brand">🌿 EcoTrack</span>
+  </header>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- MAIN -->
+  <main class="main-content">
+
+    <!-- Hero banner -->
+    <div class="rewards-hero">
+      <span class="bi-lg" id="heroBadgeIcon">🌱</span>
+      <div class="rewards-pts" id="heroPts">0</div>
+      <div class="rewards-pts-label">Total Eco Points</div>
+      <h2 id="heroBadgeName">Eco Starter</h2>
+      <p id="heroBadgeDesc">You have taken your first step on the eco journey!</p>
+    </div>
+
+    <!-- Next badge progress -->
+    <div class="next-badge-card" id="nextBadgeCard">
+      <p style="text-align:center;color:var(--gray-400);">Loading…</p>
+    </div>
+
+    <!-- All badges -->
+    <div class="card" style="margin-bottom:1.5rem;">
+      <div class="section-title">🏅 All Achievement Badges</div>
+      <div class="badges-grid" id="badgesGrid"></div>
+    </div>
+
+    <!-- How to earn -->
+    <div class="card">
+      <div class="section-title">⭐ How to Earn Points</div>
+      <div class="pts-history-list" id="howToEarn"></div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  const BADGE_DESCS = {
+    starter:  'You have taken your first step on the eco journey!',
+    learner:  'You are learning and growing greener every day.',
+    warrior:  'You are actively fighting for a better planet!',
+    champion: 'A true champion of environmental action!',
+    hero:     'An eco hero inspiring others around you!',
+    guardian: 'The ultimate protector of our precious planet! 🌍',
+  };
+
+  const HABIT_POINTS = [
+    { icon:'💧', name:'Use a Reusable Water Bottle', pts:10 },
+    { icon:'🛍️', name:'Avoid Plastic Bags',          pts:10 },
+    { icon:'💡', name:'Save Electricity',            pts:15 },
+    { icon:'🚿', name:'Save Water',                  pts:15 },
+    { icon:'🚌', name:'Use Public Transport',        pts:20 },
+    { icon:'🌳', name:'Plant or Protect Trees',      pts:25 },
+  ];
+
+  requireAuth(user => {
+    const data  = getUserData(user.uid);
+    const pts   = data.totalPoints || 0;
+    const badge = getCurrentBadge(pts);
+    const next  = getNextBadge(pts);
+
+    /* Hero */
+    document.getElementById('heroBadgeIcon').textContent = badge.icon;
+    document.getElementById('heroPts').textContent       = pts.toLocaleString();
+    document.getElementById('heroBadgeName').textContent = badge.label;
+    document.getElementById('heroBadgeDesc').textContent = BADGE_DESCS[badge.id] || '';
+
+    /* Next badge */
+    const card = document.getElementById('nextBadgeCard');
+    if (!next) {
+      card.innerHTML = `
+        <div class="max-rank-msg">
+          <div class="mr-icon">🏆</div>
+          <h3>Maximum Rank Achieved!</h3>
+          <p>You are a Planet Guardian — the highest eco rank. Keep inspiring the world!</p>
+        </div>`;
+    } else {
+      const ptsInTier = pts - badge.minPts;
+      const tierRange = next.minPts - badge.minPts;
+      const pct       = Math.min(100, Math.round((ptsInTier / tierRange) * 100));
+      const needed    = next.minPts - pts;
+      card.innerHTML = `
+        <div class="nb-top">
+          <span class="nb-icon">${next.icon}</span>
+          <div class="nb-info">
+            <h3>Next: ${next.label}</h3>
+            <p>Earn <strong>${needed.toLocaleString()} more points</strong> to unlock this badge</p>
+          </div>
+        </div>
+        <div class="nb-pct-label">
+          <span>${badge.label}</span>
+          <span>${pct}% → ${next.label}</span>
+        </div>
+        <div class="nb-bar-wrap"><div class="nb-bar-fill" style="width:${pct}%"></div></div>`;
+    }
+
+    /* All badges grid */
+    const grid = document.getElementById('badgesGrid');
+    BADGES.forEach(b => {
+      const unlocked = pts >= b.minPts;
+      const div = document.createElement('div');
+      div.className = `badge-card ${unlocked ? 'unlocked' : 'locked'}`;
+      div.innerHTML = `
+        <span class="bc-icon">${b.icon}</span>
+        <span class="bc-name">${b.label}</span>
+        <div class="bc-pts">${b.minPts === 0 ? 'Default' : b.minPts.toLocaleString() + ' pts'}</div>
+        <span class="bc-status">${unlocked ? '✅ Unlocked' : '🔒 Locked'}</span>`;
+      grid.appendChild(div);
+    });
+
+    /* How to earn */
+    const list = document.getElementById('howToEarn');
+    const totalPts = HABIT_POINTS.reduce((s,h) => s+h.pts, 0);
+    list.innerHTML = HABIT_POINTS.map(h => `
+      <div class="pts-history-item">
+        <span class="phi-icon">${h.icon}</span>
+        <span class="phi-name">${h.name}</span>
+        <span class="phi-pts">+${h.pts} pts/day</span>
+      </div>`).join('');
+    list.innerHTML += `
+      <div class="pts-history-item" style="background:var(--primary-bg);border:1px solid var(--primary-border);">
+        <span class="phi-icon">🏆</span>
+        <span class="phi-name" style="font-weight:700;">Maximum daily total</span>
+        <span class="phi-pts" style="font-size:1rem;">+${totalPts} pts</span>
+      </div>`;
+  });
+</script>
+</body>
+</html>
