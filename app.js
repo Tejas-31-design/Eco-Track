@@ -61,7 +61,6 @@ function registerUser(name, email, password) {
   users.push(user);
   localStorage.setItem(SK.users, JSON.stringify(users));
 
-  // Init user document
   saveUserData(uid, {
     name, email,
     totalPoints:     0,
@@ -70,7 +69,6 @@ function registerUser(name, email, password) {
     createdAt:       Date.now(),
   });
 
-  // Auto-login
   const session = { uid, name, email };
   localStorage.setItem(SK.current, JSON.stringify(session));
   return session;
@@ -153,9 +151,85 @@ function getCarbonLogs(uid) {
 
 function addCarbonLog(uid, log) {
   const logs = getCarbonLogs(uid);
-  logs.unshift(log); // newest first
+  logs.unshift(log);
   if (logs.length > 15) logs.pop();
   localStorage.setItem(SK.carbonLogs(uid), JSON.stringify(logs));
+}
+
+/* ── SHOP: Cart Storage ───────────────────────────────── */
+function getCart() {
+  try { return JSON.parse(localStorage.getItem('eco_cart')) || []; } catch { return []; }
+}
+function saveCart(cart) { localStorage.setItem('eco_cart', JSON.stringify(cart)); }
+
+function addToCart(product, qty) {
+  qty = qty || 1;
+  const cart = getCart();
+  const idx  = cart.findIndex(i => i.id === product.id);
+  if (idx >= 0) cart[idx].qty += qty;
+  else cart.push({ id: product.id, name: product.name, price: product.price, emoji: product.emoji, qty });
+  saveCart(cart);
+  updateCartBadge();
+}
+
+function removeFromCart(productId) {
+  saveCart(getCart().filter(i => i.id !== productId));
+  updateCartBadge();
+}
+
+function updateCartQty(productId, qty) {
+  const cart = getCart();
+  const idx  = cart.findIndex(i => i.id === productId);
+  if (idx >= 0) { if (qty <= 0) cart.splice(idx, 1); else cart[idx].qty = qty; }
+  saveCart(cart);
+  updateCartBadge();
+}
+
+function getCartTotal() {
+  return getCart().reduce((s, i) => s + i.price * i.qty, 0);
+}
+
+function getCartCount() {
+  return getCart().reduce((s, i) => s + i.qty, 0);
+}
+
+function updateCartBadge() {
+  const count = getCartCount();
+  document.querySelectorAll('.cart-badge').forEach(el => {
+    el.textContent = count;
+    el.style.display = count > 0 ? 'inline-flex' : 'none';
+  });
+}
+
+/* ── Challenges Storage ───────────────────────────────── */
+function getChallengeState(uid) {
+  try { return JSON.parse(localStorage.getItem(`eco_ch_${uid}`)) || {}; } catch { return {}; }
+}
+function saveChallengeState(uid, state) {
+  localStorage.setItem(`eco_ch_${uid}`, JSON.stringify(state));
+}
+function getWeekKey() {
+  const d = new Date(); const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  d.setDate(diff); return d.toISOString().slice(0, 10);
+}
+
+/* ── Premium Status ───────────────────────────────────── */
+function isPremium(uid) {
+  try {
+    const d = JSON.parse(localStorage.getItem(`eco_premium_${uid}`));
+    return d && d.active && d.expiry > Date.now();
+  } catch { return false; }
+}
+function activatePremium(uid) {
+  const expiry = Date.now() + 30 * 24 * 60 * 60 * 1000;
+  localStorage.setItem(`eco_premium_${uid}`, JSON.stringify({ active: true, expiry, activatedAt: Date.now() }));
+}
+function getPremiumExpiry(uid) {
+  try {
+    const d = JSON.parse(localStorage.getItem(`eco_premium_${uid}`));
+    return d ? d.expiry : null;
+  } catch { return null; }
 }
 
 /* ── Date helpers ─────────────────────────────────────── */
@@ -186,7 +260,8 @@ function shortDate(str) {
 }
 
 /* ── Toast Notification ───────────────────────────────── */
-function showToast(message, type = 'success') {
+function showToast(message, type) {
+  type = type || 'success';
   let t = document.getElementById('appToast');
   if (!t) {
     t = document.createElement('div');
@@ -215,7 +290,8 @@ function _loadSidebarUser(user) {
 function _setActiveSidebarLink() {
   const page = window.location.pathname.split('/').pop() || 'dashboard.html';
   document.querySelectorAll('.sidebar-link').forEach(link => {
-    link.classList.toggle('active', link.getAttribute('href') === page);
+    const href = link.getAttribute('href');
+    link.classList.toggle('active', href === page);
   });
 }
 

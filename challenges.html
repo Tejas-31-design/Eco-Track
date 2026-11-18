@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eco Challenges – EcoTrack</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="app.js"></script>
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header"><span class="sidebar-logo">🌿</span><span class="sidebar-brand">EcoTrack</span></div>
+    <div class="sidebar-user"><span class="user-avatar">👤</span><span class="user-name" id="sidebarUserName">Loading…</span></div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html"  class="sidebar-link">🏠 Dashboard</a>
+      <a href="habits.html"     class="sidebar-link">🌱 Track Habits</a>
+      <a href="calculator.html" class="sidebar-link">🧮 Carbon Calculator</a>
+      <a href="challenges.html" class="sidebar-link active">🎯 Challenges</a>
+      <a href="rewards.html"    class="sidebar-link">🏆 Rewards</a>
+      <a href="shop.html"       class="sidebar-link">🛒 Eco Shop <span class="cart-badge" style="display:none">0</span></a>
+      <a href="premium.html"    class="sidebar-link">⭐ Premium</a>
+      <a href="progress.html"   class="sidebar-link">📊 My Progress</a>
+    </nav>
+    <button class="sidebar-logout" onclick="logout()">🚪 Logout</button>
+  </aside>
+  <header class="mobile-header"><button class="hamburger" id="hamburger">☰</button><span class="mobile-brand">🌿 EcoTrack</span></header>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- MAIN -->
+  <main class="main-content">
+
+    <!-- Page Header -->
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:24px;">
+      <div>
+        <h1 class="page-title">🎯 Eco Challenges</h1>
+        <p class="page-subtitle" id="challengeDate">Complete challenges to earn bonus EcoPoints!</p>
+      </div>
+      <div style="background:linear-gradient(135deg,var(--primary-dark),var(--primary));color:#fff;border-radius:14px;padding:12px 20px;text-align:center;min-width:120px;">
+        <div style="font-size:1.8rem;font-weight:800;line-height:1;" id="totalPtsDisplay">0</div>
+        <div style="font-size:.75rem;opacity:.85;margin-top:2px;">Total Points</div>
+      </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="dash-row" style="margin-bottom:24px;">
+      <div class="mini-stat">
+        <div class="mini-stat-icon">🎯</div>
+        <div class="mini-stat-info">
+          <div class="num" id="statDone">0</div>
+          <div class="lbl">Challenges Completed</div>
+        </div>
+      </div>
+      <div class="mini-stat">
+        <div class="mini-stat-icon">⭐</div>
+        <div class="mini-stat-info">
+          <div class="num" id="statChPts">0</div>
+          <div class="lbl">Points from Challenges</div>
+        </div>
+      </div>
+      <div class="mini-stat">
+        <div class="mini-stat-icon">🔥</div>
+        <div class="mini-stat-info">
+          <div class="num" id="statStreak">0</div>
+          <div class="lbl">Day Streak</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Daily Challenges -->
+    <div class="section-label">
+      <h2>🌅 Daily Challenges</h2>
+      <span>Resets every day</span>
+    </div>
+    <div class="challenges-grid" id="dailyGrid"></div>
+
+    <!-- Weekly Challenges -->
+    <div class="section-label">
+      <h2>🗓️ Weekly Challenges</h2>
+      <span>Bonus points — resets every Monday</span>
+    </div>
+    <div class="challenges-grid" id="weeklyGrid"></div>
+
+    <!-- Special Challenges -->
+    <div class="section-label">
+      <h2>⚡ Special Challenges</h2>
+      <span>Extra milestones</span>
+    </div>
+    <div class="challenges-grid" id="specialGrid"></div>
+
+  </main>
+</div>
+
+<script>
+/* ── Challenges data ── */
+const DAILY_CHALLENGES = [
+  { id:'d1', icon:'🚶', title:'Walk 5,000 Steps',       desc:'Walk at least 5,000 steps today to reduce your carbon footprint.',     pts:20,  badge:'daily',   ptsCls:'' },
+  { id:'d2', icon:'💧', title:'Save 20 Litres of Water', desc:'Take shorter showers and turn off taps to save water today.',          pts:15,  badge:'daily',   ptsCls:'' },
+  { id:'d3', icon:'🚌', title:'Use Public Transport',    desc:'Take a bus, train or metro instead of a private vehicle today.',        pts:25,  badge:'daily',   ptsCls:'' },
+  { id:'d4', icon:'🥗', title:'Eat a Plant-Based Meal',  desc:'Have at least one fully plant-based meal today to reduce emissions.',  pts:20,  badge:'daily',   ptsCls:'' },
+  { id:'d5', icon:'📵', title:'1-Hour Digital Detox',    desc:'Turn off all devices for 1 hour to save electricity today.',           pts:10,  badge:'daily',   ptsCls:'' },
+  { id:'d6', icon:'♻️', title:'Recycle 3 Items',         desc:'Properly sort and recycle at least 3 items today.',                   pts:15,  badge:'daily',   ptsCls:'' },
+];
+
+const WEEKLY_CHALLENGES = [
+  { id:'w1', icon:'🚲', title:'Cycle 20km This Week',   desc:'Cycle at least 20km total this week — commute, leisure or exercise.',  pts:100, badge:'weekly',  ptsCls:'gold' },
+  { id:'w2', icon:'🌳', title:'Plant 1 Tree This Week', desc:'Plant a tree or seedling in your garden, balcony or community.',       pts:150, badge:'weekly',  ptsCls:'gold' },
+  { id:'w3', icon:'🛍️', title:'Zero Plastic Week',      desc:'Avoid all single-use plastic for 7 consecutive days.',                pts:200, badge:'weekly',  ptsCls:'gold' },
+  { id:'w4', icon:'💡', title:'Reduce Energy by 20%',   desc:'Track and reduce your electricity usage by 20% vs last week.',         pts:120, badge:'weekly',  ptsCls:'gold' },
+];
+
+const SPECIAL_CHALLENGES = [
+  { id:'s1', icon:'🌍', title:'Carbon Neutral Day',     desc:'Offset ALL your daily emissions through eco activities. Full set!',    pts:300, badge:'special', ptsCls:'purple' },
+  { id:'s2', icon:'📸', title:'Eco Influencer',         desc:'Share your EcoTrack progress on any social platform (screenshot).',   pts:50,  badge:'special', ptsCls:'purple' },
+  { id:'s3', icon:'🧹', title:'Community Clean-Up',     desc:'Participate in or organise a local area clean-up event.',              pts:250, badge:'special', ptsCls:'purple' },
+];
+
+const BADGE_LABELS = { daily:'🌅 Daily', weekly:'🗓️ Weekly', special:'⚡ Special' };
+const BADGE_CLS    = { daily:'ch-badge-daily', weekly:'ch-badge-weekly', special:'ch-badge-special' };
+
+let currentUser = null;
+let chState = {};  // { d1: { completed, pts, dateKey }, … }
+
+function getDayKey()  { return getToday(); }
+
+/* ── Render a grid of challenges ── */
+function renderGrid(containerId, challenges) {
+  const grid = document.getElementById(containerId);
+  grid.innerHTML = challenges.map(ch => {
+    const key      = ch.badge === 'daily' ? `${ch.id}_${getDayKey()}` : ch.badge === 'weekly' ? `${ch.id}_${getWeekKey()}` : ch.id;
+    const done     = !!(chState[key] && chState[key].completed);
+    const pct      = done ? 100 : 0;
+
+    return `
+    <div class="challenge-card ${done ? 'completed' : ''}" id="ch-${key}">
+      <div class="ch-header">
+        <span class="ch-icon">${ch.icon}</span>
+        <span class="ch-pts ${ch.ptsCls}">+${ch.pts} pts</span>
+      </div>
+      <span class="ch-badge ${BADGE_CLS[ch.badge]}">${BADGE_LABELS[ch.badge]}</span>
+      <div class="ch-title">${ch.title}</div>
+      <div class="ch-desc">${ch.desc}</div>
+      <div class="ch-progress"><div class="ch-prog-fill" id="fill-${key}" style="width:${pct}%"></div></div>
+      <div class="ch-prog-label" id="prog-${key}">${done ? '✅ Completed!' : '0% complete — tap below to complete'}</div>
+      ${done
+        ? `<div class="ch-done-badge">✅ Completed! +${ch.pts} pts earned</div>`
+        : `<button class="btn btn-primary btn-sm" onclick="completeChallenge('${key}',${ch.pts},'${ch.id}')">Complete Challenge</button>`
+      }
+    </div>`;
+  }).join('');
+}
+
+/* ── Complete a challenge ── */
+function completeChallenge(key, pts, id) {
+  if (chState[key] && chState[key].completed) {
+    showToast('Already completed!', 'info');
+    return;
+  }
+  chState[key] = { completed: true, pts, completedAt: Date.now() };
+  saveChallengeState(currentUser.uid, chState);
+  incrementUserPoints(currentUser.uid, pts);
+
+  // Update stats
+  const data = getUserData(currentUser.uid);
+  document.getElementById('totalPtsDisplay').textContent = (data.totalPoints || 0).toLocaleString();
+
+  recalcStats();
+  rerenderCard(key, pts);
+  showToast(`🎉 Challenge completed! +${pts} EcoPoints earned!`, 'success');
+}
+
+function rerenderCard(key, pts) {
+  const card = document.getElementById('ch-' + key);
+  if (!card) return;
+  card.classList.add('completed');
+  const fill = document.getElementById('fill-' + key);
+  if (fill) fill.style.width = '100%';
+  const prog = document.getElementById('prog-' + key);
+  if (prog) prog.textContent = '✅ Completed!';
+  const btn = card.querySelector('button.btn-primary');
+  if (btn) btn.outerHTML = `<div class="ch-done-badge">✅ Completed! +${pts} pts earned</div>`;
+}
+
+function recalcStats() {
+  let done = 0, chPts = 0;
+  Object.values(chState).forEach(v => {
+    if (v.completed) { done++; chPts += (v.pts || 0); }
+  });
+  document.getElementById('statDone').textContent  = done;
+  document.getElementById('statChPts').textContent = chPts;
+
+  // Streak: count consecutive days with any challenge completed
+  let streak = 0;
+  const today = new Date();
+  for (let i = 0; i < 30; i++) {
+    const d = new Date(today); d.setDate(d.getDate() - i);
+    const dk = d.toISOString().slice(0,10);
+    const hasActivity = Object.keys(chState).some(k => k.includes(dk) && chState[k].completed);
+    if (hasActivity) streak++;
+    else if (i > 0) break;
+  }
+  document.getElementById('statStreak').textContent = streak;
+}
+
+/* ── Init ── */
+requireAuth(user => {
+  currentUser = user;
+  chState = getChallengeState(user.uid);
+
+  const data = getUserData(user.uid);
+  document.getElementById('totalPtsDisplay').textContent = (data.totalPoints || 0).toLocaleString();
+  document.getElementById('challengeDate').textContent   = new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+  renderGrid('dailyGrid',   DAILY_CHALLENGES);
+  renderGrid('weeklyGrid',  WEEKLY_CHALLENGES);
+  renderGrid('specialGrid', SPECIAL_CHALLENGES);
+  recalcStats();
+  updateCartBadge();
+});
+</script>
+</body>
+</html>

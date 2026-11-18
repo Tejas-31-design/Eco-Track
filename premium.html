@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Premium – EcoTrack</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="app.js"></script>
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header"><span class="sidebar-logo">🌿</span><span class="sidebar-brand">EcoTrack</span></div>
+    <div class="sidebar-user"><span class="user-avatar">👤</span><span class="user-name" id="sidebarUserName">Loading…</span></div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html"  class="sidebar-link">🏠 Dashboard</a>
+      <a href="habits.html"     class="sidebar-link">🌱 Track Habits</a>
+      <a href="calculator.html" class="sidebar-link">🧮 Carbon Calculator</a>
+      <a href="challenges.html" class="sidebar-link">🎯 Challenges</a>
+      <a href="rewards.html"    class="sidebar-link">🏆 Rewards</a>
+      <a href="shop.html"       class="sidebar-link">🛒 Eco Shop <span class="cart-badge" style="display:none">0</span></a>
+      <a href="premium.html"    class="sidebar-link active">⭐ Premium</a>
+      <a href="progress.html"   class="sidebar-link">📊 My Progress</a>
+    </nav>
+    <button class="sidebar-logout" onclick="logout()">🚪 Logout</button>
+  </aside>
+  <header class="mobile-header"><button class="hamburger" id="hamburger">☰</button><span class="mobile-brand">🌿 EcoTrack</span></header>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- MAIN -->
+  <main class="main-content">
+
+    <!-- Hero -->
+    <div class="premium-hero">
+      <h1>⭐ Unlock EcoTrack Premium</h1>
+      <p>Advanced analytics, personalised challenges, exclusive rewards, and a bigger positive impact on the planet.</p>
+      <div class="premium-status" id="premiumStatusBadge">🆓 Free Plan</div>
+    </div>
+
+    <!-- Active Premium Banner (hidden by default) -->
+    <div id="premiumActiveBanner" style="display:none;background:linear-gradient(90deg,#14532d,#15803d);color:#fff;border-radius:var(--rl);padding:20px 24px;margin-bottom:24px;display:none;align-items:center;gap:16px;flex-wrap:wrap;">
+      <span style="font-size:2rem;">🌟</span>
+      <div style="flex:1;">
+        <div style="font-weight:800;font-size:1.1rem;">You are a Premium Member!</div>
+        <div style="opacity:.8;font-size:.88rem;" id="premiumExpiryText">Your plan is active.</div>
+      </div>
+      <a href="dashboard.html" class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.5);">Go to Dashboard →</a>
+    </div>
+
+    <!-- Plans -->
+    <div class="plans-grid">
+
+      <!-- Free Plan -->
+      <div class="plan-card">
+        <div class="plan-name">Free Plan</div>
+        <div class="plan-desc">Everything you need to start your eco journey.</div>
+        <div class="plan-price">FREE <small>/forever</small></div>
+        <div class="plan-features">
+          <div class="plan-feature"><span class="ck">✅</span> Basic habit tracking (6 habits/day)</div>
+          <div class="plan-feature"><span class="ck">✅</span> Carbon footprint calculator</div>
+          <div class="plan-feature"><span class="ck">✅</span> Daily eco challenges</div>
+          <div class="plan-feature"><span class="ck">✅</span> Basic progress charts (7 days)</div>
+          <div class="plan-feature"><span class="ck">✅</span> Eco Shop access</div>
+          <div class="plan-feature"><span class="ck">✅</span> 6 achievement badges</div>
+          <div class="plan-feature"><span class="xk">❌</span> Advanced environmental analytics</div>
+          <div class="plan-feature"><span class="xk">❌</span> AI-personalised eco challenges</div>
+          <div class="plan-feature"><span class="xk">❌</span> Detailed weekly/monthly reports</div>
+          <div class="plan-feature"><span class="xk">❌</span> Exclusive Premium rewards (+50% pts)</div>
+          <div class="plan-feature"><span class="xk">❌</span> Priority customer support</div>
+        </div>
+        <button class="btn btn-secondary btn-block" disabled>Current Plan</button>
+      </div>
+
+      <!-- Premium Plan -->
+      <div class="plan-card featured">
+        <span class="plan-badge">⭐ MOST POPULAR</span>
+        <div class="plan-name" style="color:var(--primary-darker);">Premium Plan</div>
+        <div class="plan-desc">For serious eco champions who want maximum impact.</div>
+        <div class="plan-price">₹499 <sub>/</sub><small>month</small></div>
+        <div class="plan-features">
+          <div class="plan-feature"><span class="ck">✅</span> Everything in Free</div>
+          <div class="plan-feature"><span class="ck">✅</span> Advanced environmental analytics</div>
+          <div class="plan-feature"><span class="ck">✅</span> AI-personalised eco challenges</div>
+          <div class="plan-feature"><span class="ck">✅</span> Detailed weekly &amp; monthly reports</div>
+          <div class="plan-feature"><span class="ck">✅</span> <strong>+50% bonus points</strong> on all activities</div>
+          <div class="plan-feature"><span class="ck">✅</span> Exclusive Premium badges &amp; rewards</div>
+          <div class="plan-feature"><span class="ck">✅</span> Unlimited history &amp; data export</div>
+          <div class="plan-feature"><span class="ck">✅</span> Priority customer support</div>
+          <div class="plan-feature"><span class="ck">✅</span> Early access to new features</div>
+          <div class="plan-feature"><span class="ck">✅</span> Ad-free experience</div>
+        </div>
+        <button class="btn btn-primary btn-block" id="upgradeBtn" onclick="handleUpgrade()">
+          Upgrade to Premium — ₹499/month
+        </button>
+        <p style="font-size:.75rem;color:var(--gray-400);text-align:center;margin-top:10px;">Cancel anytime · Secure checkout · No hidden fees</p>
+      </div>
+    </div>
+
+    <!-- Comparison Table -->
+    <div class="card" style="margin-bottom:28px;overflow-x:auto;">
+      <div class="card-title">📊 Full Feature Comparison</div>
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th style="width:50%">Feature</th>
+            <th>Free</th>
+            <th style="color:var(--primary-darker);">Premium</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Daily Habit Tracking</td><td>✅ 6 habits</td><td>✅ 6 habits</td></tr>
+          <tr><td>Carbon Footprint Calculator</td><td>✅ Basic</td><td>✅ Advanced</td></tr>
+          <tr><td>Eco Challenges</td><td>✅ Daily only</td><td>✅ Daily + Weekly + Special</td></tr>
+          <tr><td>Progress Charts</td><td>✅ 7-day</td><td>✅ 30-day + monthly</td></tr>
+          <tr><td>Achievement Badges</td><td>✅ 6 badges</td><td>✅ 12+ exclusive badges</td></tr>
+          <tr><td>Eco Shop Access</td><td>✅ Full access</td><td>✅ 10% Premium discount</td></tr>
+          <tr><td>EcoPoints Multiplier</td><td>1× base</td><td>1.5× bonus points</td></tr>
+          <tr><td>Environmental Reports</td><td>❌</td><td>✅ Weekly + Monthly PDF</td></tr>
+          <tr><td>AI Personalisation</td><td>❌</td><td>✅ Custom challenge path</td></tr>
+          <tr><td>Data Export</td><td>❌</td><td>✅ CSV / PDF download</td></tr>
+          <tr><td>Priority Support</td><td>❌</td><td>✅ 24hr response</td></tr>
+          <tr><td>Early Access</td><td>❌</td><td>✅ Beta features first</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- FAQ -->
+    <div class="card" style="margin-bottom:28px;">
+      <div class="card-title">❓ Frequently Asked Questions</div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">What is EcoTrack Premium? <span>+</span></button>
+        <div class="faq-a">EcoTrack Premium is our paid plan that unlocks advanced analytics, personalised eco challenges, detailed environmental impact reports, +50% bonus EcoPoints on every activity, and exclusive Premium badges. It's designed for people who want to take their sustainability journey to the next level.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">How does billing work? <span>+</span></button>
+        <div class="faq-a">Premium is billed at ₹499/month. Your subscription renews automatically on the same date each month. We will send you a reminder email before each renewal. Payment gateway integration (Razorpay / UPI) is coming soon — this is a demo activation.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">Can I cancel anytime? <span>+</span></button>
+        <div class="faq-a">Yes! You can cancel your Premium subscription anytime from your account settings. When you cancel, you keep Premium benefits until the end of your current billing period. No questions asked, no cancellation fees.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">Is my data secure? <span>+</span></button>
+        <div class="faq-a">Absolutely. EcoTrack stores your data locally in your browser using localStorage — your personal eco data never leaves your device. We follow strict privacy principles and do not sell your data to third parties. For cloud sync (coming soon), we'll use industry-standard encryption.</div>
+      </div>
+    </div>
+
+    <!-- Business / Partner Section -->
+    <div class="partner-card">
+      <div style="display:flex;align-items:flex-start;gap:20px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:200px;">
+          <h2 style="margin-bottom:10px;">🤝 Partner with EcoTrack</h2>
+          <p style="margin-bottom:14px;">Are you an eco-friendly business? Reach thousands of environmentally-conscious users through EcoTrack's platform.</p>
+          <ul style="display:flex;flex-direction:column;gap:8px;list-style:none;margin-bottom:20px;">
+            <li style="display:flex;align-items:center;gap:8px;font-size:.9rem;color:var(--gray-700);"><span>🛒</span> Sell products in the EcoTrack Shop</li>
+            <li style="display:flex;align-items:center;gap:8px;font-size:.9rem;color:var(--gray-700);"><span>🎯</span> Sponsor branded eco challenges</li>
+            <li style="display:flex;align-items:center;gap:8px;font-size:.9rem;color:var(--gray-700);"><span>📢</span> Affiliate product recommendations</li>
+            <li style="display:flex;align-items:center;gap:8px;font-size:.9rem;color:var(--gray-700);"><span>🌍</span> Co-branded sustainability campaigns</li>
+          </ul>
+          <a href="mailto:partnerships@ecotrack.green" class="btn btn-primary">📧 Get in Touch</a>
+        </div>
+        <div style="background:rgba(255,255,255,.7);border-radius:var(--r);padding:20px;min-width:180px;text-align:center;">
+          <div style="font-size:2rem;margin-bottom:8px;">📧</div>
+          <div style="font-weight:700;color:var(--gray-800);font-size:.9rem;">partnerships@ecotrack.green</div>
+          <div style="font-size:.8rem;color:var(--gray-500);margin-top:6px;">We respond within 2 business days</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  function toggleFaq(btn) {
+    const ans = btn.nextElementSibling;
+    const icon = btn.querySelector('span');
+    const isOpen = ans.classList.contains('open');
+    document.querySelectorAll('.faq-a').forEach(a => a.classList.remove('open'));
+    document.querySelectorAll('.faq-q span').forEach(s => s.textContent = '+');
+    if (!isOpen) { ans.classList.add('open'); icon.textContent = '−'; }
+  }
+
+  function handleUpgrade() {
+    const user = getCurrentUser();
+    if (!user) return;
+    if (isPremium(user.uid)) {
+      showToast('You are already a Premium member! 🌟', 'info');
+      return;
+    }
+    // Demo activation — in production this opens a payment gateway
+    showToast('⚡ Payment gateway (Razorpay/UPI) integration coming soon! Premium activated in demo mode.', 'info');
+    activatePremium(user.uid);
+    setTimeout(() => updatePremiumUI(user.uid), 500);
+  }
+
+  function updatePremiumUI(uid) {
+    const premium = isPremium(uid);
+    const badge   = document.getElementById('premiumStatusBadge');
+    const btn     = document.getElementById('upgradeBtn');
+    const banner  = document.getElementById('premiumActiveBanner');
+
+    if (premium) {
+      badge.textContent  = '⭐ Premium Member';
+      badge.className    = 'premium-status is-premium';
+      btn.textContent    = '✅ You are Premium!';
+      btn.disabled       = true;
+      btn.style.opacity  = '.7';
+      banner.style.display = 'flex';
+      const expiry = getPremiumExpiry(uid);
+      if (expiry) {
+        document.getElementById('premiumExpiryText').textContent =
+          'Active until ' + new Date(expiry).toLocaleDateString('en-IN', { year:'numeric', month:'long', day:'numeric' });
+      }
+    } else {
+      badge.textContent = '🆓 Free Plan';
+      badge.className   = 'premium-status';
+      btn.textContent   = 'Upgrade to Premium — ₹499/month';
+      btn.disabled      = false;
+      banner.style.display = 'none';
+    }
+  }
+
+  requireAuth(user => {
+    updatePremiumUI(user.uid);
+    updateCartBadge();
+  });
+</script>
+</body>
+</html>

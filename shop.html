@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eco Shop – EcoTrack</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="app.js"></script>
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header"><span class="sidebar-logo">🌿</span><span class="sidebar-brand">EcoTrack</span></div>
+    <div class="sidebar-user"><span class="user-avatar">👤</span><span class="user-name" id="sidebarUserName">Loading…</span></div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html"  class="sidebar-link">🏠 Dashboard</a>
+      <a href="habits.html"     class="sidebar-link">🌱 Track Habits</a>
+      <a href="calculator.html" class="sidebar-link">🧮 Carbon Calculator</a>
+      <a href="challenges.html" class="sidebar-link">🎯 Challenges</a>
+      <a href="rewards.html"    class="sidebar-link">🏆 Rewards</a>
+      <a href="shop.html"       class="sidebar-link active">🛒 Eco Shop <span class="cart-badge" style="display:none">0</span></a>
+      <a href="premium.html"    class="sidebar-link">⭐ Premium</a>
+      <a href="progress.html"   class="sidebar-link">📊 My Progress</a>
+    </nav>
+    <button class="sidebar-logout" onclick="logout()">🚪 Logout</button>
+  </aside>
+  <header class="mobile-header"><button class="hamburger" id="hamburger">☰</button><span class="mobile-brand">🌿 EcoTrack</span></header>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- MAIN -->
+  <main class="main-content">
+
+    <!-- Hero -->
+    <div class="shop-hero">
+      <h1>🛒 EcoTrack Shop</h1>
+      <p>Shop eco-friendly products and earn EcoPoints on every purchase!</p>
+      <div class="shop-search-bar">
+        <input type="text" id="searchInput" placeholder="Search products…" oninput="filterProducts()" />
+        <button onclick="filterProducts()">🔍 Search</button>
+      </div>
+    </div>
+
+    <!-- Shop + Cart Layout -->
+    <div class="shop-main-layout">
+
+      <!-- Products Section -->
+      <div>
+        <!-- Category + Products -->
+        <div class="shop-layout">
+
+          <!-- Category sidebar -->
+          <div class="shop-sidebar">
+            <h3>Categories</h3>
+            <button class="cat-btn active" onclick="setCategory('all',this)">🌿 All Products</button>
+            <button class="cat-btn" onclick="setCategory('bottles',this)">💧 Water Bottles</button>
+            <button class="cat-btn" onclick="setCategory('bamboo',this)">🎋 Bamboo Products</button>
+            <button class="cat-btn" onclick="setCategory('bags',this)">🛍️ Bags &amp; Totes</button>
+            <button class="cat-btn" onclick="setCategory('stationery',this)">📓 Stationery</button>
+            <button class="cat-btn" onclick="setCategory('solar',this)">☀️ Solar Products</button>
+            <button class="cat-btn" onclick="setCategory('plants',this)">🌱 Plants &amp; Seeds</button>
+            <button class="cat-btn" onclick="setCategory('recycled',this)">♻️ Recycled Products</button>
+            <button class="cat-btn" onclick="setCategory('home',this)">🏠 Home &amp; Living</button>
+          </div>
+
+          <!-- Products grid -->
+          <div>
+            <div class="shop-toolbar">
+              <h3 id="shopTitle">All Products</h3>
+              <span id="shopCount">22 products</span>
+            </div>
+            <div class="products-grid" id="productsGrid"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cart panel -->
+      <div class="cart-panel">
+        <h3>🛒 Your Cart <span class="cart-badge" style="display:none">0</span></h3>
+        <div id="cartItems">
+          <div class="cart-empty">
+            <div class="cart-empty-icon">🛒</div>
+            <p>Your cart is empty.<br/>Start adding eco products!</p>
+          </div>
+        </div>
+        <div id="cartFooter" style="display:none;">
+          <div class="cart-total">
+            <span>Total</span>
+            <span id="cartTotalAmt">₹0</span>
+          </div>
+          <button class="btn btn-primary btn-block" style="margin-top:14px;" onclick="checkout()">
+            Proceed to Checkout →
+          </button>
+          <button class="btn btn-secondary btn-block" style="margin-top:8px;" onclick="clearCartConfirm()">
+            Clear Cart
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+/* ── Products Data ── */
+const PRODUCTS = [
+  { id:1,  cat:'bottles',   emoji:'💧', name:'BambooSip Reusable Bottle',  desc:'500ml insulated bamboo bottle. Cold 24h, hot 12h.',              price:599,  original:899,  eco:'Saves ~500 plastic bottles/yr' },
+  { id:2,  cat:'bottles',   emoji:'🌊', name:'Ocean-Saved Water Bottle',   desc:'Made from recycled ocean plastic. 750ml, BPA-free.',             price:799,  original:1199, eco:'Prevents 2kg ocean plastic' },
+  { id:3,  cat:'bottles',   emoji:'🍃', name:'Copper Wellness Bottle',     desc:'Traditional copper bottle for healthy hydration. 1 litre.',       price:449,  original:699,  eco:'No plastic, lasts lifetime' },
+  { id:4,  cat:'bamboo',    emoji:'🪥', name:'Bamboo Toothbrush Set (4)',   desc:'Biodegradable bamboo handles with charcoal bristles.',           price:299,  original:499,  eco:'Saves 4 plastic toothbrushes' },
+  { id:5,  cat:'bamboo',    emoji:'🥢', name:'Bamboo Cutlery Set',         desc:'Fork, spoon, knife, straw & cleaning brush set.',                price:349,  original:599,  eco:'Replaces 500+ plastic utensils' },
+  { id:6,  cat:'bamboo',    emoji:'🧴', name:'Bamboo Soap Dish',           desc:'Natural bamboo dish with drainage slots. Bathroom essential.',    price:199,  original:349,  eco:'100% biodegradable' },
+  { id:7,  cat:'bags',      emoji:'🛍️', name:'Organic Cotton Tote Bag',    desc:'Large 42×38cm organic cotton bag. Machine washable.',            price:249,  original:399,  eco:'Replaces 1000+ plastic bags' },
+  { id:8,  cat:'bags',      emoji:'🎒', name:'Hemp Backpack 20L',          desc:'Eco-friendly hemp backpack with laptop compartment.',             price:1299, original:1999, eco:'Natural hemp, low carbon' },
+  { id:9,  cat:'bags',      emoji:'🌿', name:'Jute Shopping Bag 3-Pack',   desc:'Strong jute bags for grocery shopping. 3 sizes.',                price:349,  original:549,  eco:'Biodegradable & reusable' },
+  { id:10, cat:'stationery',emoji:'📓', name:'Recycled Paper Notebook',    desc:'A5 notebook, 100% recycled paper. 200 ruled pages.',             price:199,  original:299,  eco:'Saves 1 tree per 50 notebooks' },
+  { id:11, cat:'stationery',emoji:'✏️', name:'Seed Pencil Set (10)',        desc:'Plant-able pencils with wildflower seeds in the eraser.',        price:349,  original:499,  eco:'Grows plants when done!' },
+  { id:12, cat:'stationery',emoji:'🖊️', name:'Eco Ballpoint Pens (5)',     desc:'Pens from recycled newspaper. Smooth writing, refillable.',      price:149,  original:249,  eco:'100% recycled material' },
+  { id:13, cat:'solar',     emoji:'☀️', name:'Solar Phone Charger 10000mAh',desc:'Solar power bank, dual USB. Perfect for travel.',               price:1799, original:2999, eco:'Zero-emission charging' },
+  { id:14, cat:'solar',     emoji:'💡', name:'Solar Garden Lights 4-Pack', desc:'Waterproof LED solar lights. Auto on/off at night.',             price:999,  original:1599, eco:'Save 50W electricity/year' },
+  { id:15, cat:'solar',     emoji:'🔦', name:'Solar LED Study Lamp',       desc:'Foldable solar desk lamp. 3 brightness levels + USB backup.',    price:1299, original:1999, eco:'No electricity bill' },
+  { id:16, cat:'plants',    emoji:'🌱', name:'Herb Garden Starter Kit',    desc:'Grow basil, mint & coriander. Seeds + soil + pots included.',    price:399,  original:649,  eco:'Reduces food packaging' },
+  { id:17, cat:'plants',    emoji:'🪴', name:'Air-Purifying Plant Set',    desc:'3 indoor plants — Pothos, Snake plant, Peace Lily in eco pots.', price:899,  original:1299, eco:'Absorbs CO₂ & toxins' },
+  { id:18, cat:'plants',    emoji:'🌳', name:'Plant-a-Tree Kit',           desc:'Native tree sapling + planting guide (Mango, Neem or Peepal).',  price:299,  original:499,  eco:'Absorbs 100kg CO₂/year' },
+  { id:19, cat:'recycled',  emoji:'♻️', name:'Recycled Plastic Ruler Set', desc:'School ruler set from 100% post-consumer recycled plastic.',     price:99,   original:149,  eco:'Recycled ocean plastic' },
+  { id:20, cat:'home',      emoji:'🏠', name:'Beeswax Food Wraps 3-Pack',  desc:'Reusable wraps to replace cling film. 3 sizes.',                 price:599,  original:899,  eco:'Replaces 1000+ cling wraps' },
+  { id:21, cat:'home',      emoji:'🧹', name:'Compostable Trash Bags 15pk',desc:'100% compostable 30-litre trash bags.',                          price:299,  original:449,  eco:'Fully biodegradable' },
+  { id:22, cat:'home',      emoji:'🧽', name:'Natural Loofah Sponge (3)',  desc:'100% natural loofah for kitchen & bath. Zero plastic.',          price:199,  original:349,  eco:'Biodegradable, lasts 3 months' },
+];
+
+let currentCategory = 'all';
+let quantities = {};  // productId → qty shown in card UI
+
+/* ── Category Filter ── */
+function setCategory(cat, btn) {
+  currentCategory = cat;
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderProducts();
+}
+
+/* ── Filter + Render ── */
+function filterProducts() { renderProducts(); }
+
+function renderProducts() {
+  const q   = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+  const grid = document.getElementById('productsGrid');
+  let filtered = PRODUCTS.filter(p => {
+    const catMatch  = currentCategory === 'all' || p.cat === currentCategory;
+    const termMatch = !q || p.name.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q) || p.eco.toLowerCase().includes(q);
+    return catMatch && termMatch;
+  });
+
+  document.getElementById('shopCount').textContent = `${filtered.length} product${filtered.length !== 1 ? 's' : ''}`;
+  const catNames = { all:'All Products', bottles:'💧 Water Bottles', bamboo:'🎋 Bamboo Products', bags:'🛍️ Bags & Totes', stationery:'📓 Stationery', solar:'☀️ Solar Products', plants:'🌱 Plants & Seeds', recycled:'♻️ Recycled Products', home:'🏠 Home & Living' };
+  document.getElementById('shopTitle').textContent = q ? `Results for "${q}"` : catNames[currentCategory] || 'Products';
+
+  if (!filtered.length) {
+    grid.innerHTML = '<div class="no-data-msg" style="grid-column:1/-1;">No products found. Try a different search or category.</div>';
+    return;
+  }
+
+  grid.innerHTML = filtered.map(p => {
+    const qty = quantities[p.id] || 1;
+    const disc = Math.round((1 - p.price / p.original) * 100);
+    return `
+    <div class="product-card" id="pcard-${p.id}">
+      <div class="product-img">${p.emoji}</div>
+      <div class="product-body">
+        <span class="product-eco">🌿 ${p.eco}</span>
+        <div class="product-name">${p.name}</div>
+        <div class="product-desc">${p.desc}</div>
+        <div class="product-price">
+          ₹${p.price.toLocaleString('en-IN')}
+          <span class="original">₹${p.original.toLocaleString('en-IN')}</span>
+          <span class="discount">${disc}% off</span>
+        </div>
+        <div class="qty-selector">
+          <button class="qty-btn" onclick="changeQty(${p.id},-1)">−</button>
+          <span class="qty-num" id="qty-${p.id}">${qty}</span>
+          <button class="qty-btn" onclick="changeQty(${p.id},1)">+</button>
+        </div>
+        <div class="product-actions">
+          <button class="btn btn-secondary btn-sm" onclick="handleAddToCart(${p.id})">🛒 Add</button>
+          <button class="btn btn-primary btn-sm"   onclick="handleBuyNow(${p.id})">Buy Now</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function changeQty(id, delta) {
+  quantities[id] = Math.max(1, (quantities[id] || 1) + delta);
+  const el = document.getElementById('qty-' + id);
+  if (el) el.textContent = quantities[id];
+}
+
+function handleAddToCart(id) {
+  const p   = PRODUCTS.find(x => x.id === id);
+  const qty = quantities[id] || 1;
+  addToCart(p, qty);
+  renderCart();
+  showToast(`✅ ${p.name} added to cart!`, 'success');
+}
+
+function handleBuyNow(id) {
+  const p   = PRODUCTS.find(x => x.id === id);
+  const qty = quantities[id] || 1;
+  addToCart(p, qty);
+  renderCart();
+  showToast('Added to cart! Checkout feature coming soon. 🛒', 'info');
+}
+
+/* ── Cart Render ── */
+function renderCart() {
+  const cart  = getCart();
+  const items = document.getElementById('cartItems');
+  const footer= document.getElementById('cartFooter');
+
+  if (!cart.length) {
+    items.innerHTML = '<div class="cart-empty"><div class="cart-empty-icon">🛒</div><p>Your cart is empty.<br/>Start adding eco products!</p></div>';
+    footer.style.display = 'none';
+    return;
+  }
+
+  footer.style.display = 'block';
+  items.innerHTML = cart.map(item => `
+    <div class="cart-item">
+      <span class="cart-item-icon">${item.emoji}</span>
+      <div class="cart-item-info">
+        <div class="cart-item-name">${item.name}</div>
+        <div class="cart-item-price">₹${item.price.toLocaleString('en-IN')} × ${item.qty}</div>
+        <div class="cart-item-ctrl">
+          <button class="qty-btn" style="width:22px;height:22px;font-size:.8rem;" onclick="changeCartQty(${item.id},-1)">−</button>
+          <span style="font-size:.85rem;font-weight:700;min-width:20px;text-align:center;">${item.qty}</span>
+          <button class="qty-btn" style="width:22px;height:22px;font-size:.8rem;" onclick="changeCartQty(${item.id},1)">+</button>
+          <button class="cart-item-remove" onclick="handleRemove(${item.id})">Remove</button>
+        </div>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('cartTotalAmt').textContent = '₹' + getCartTotal().toLocaleString('en-IN');
+  updateCartBadge();
+}
+
+function changeCartQty(id, delta) {
+  const cart = getCart();
+  const item = cart.find(i => i.id === id);
+  if (item) {
+    const newQty = item.qty + delta;
+    updateCartQty(id, newQty);
+    renderCart();
+  }
+}
+
+function handleRemove(id) {
+  removeFromCart(id);
+  renderCart();
+  showToast('Item removed from cart.', 'info');
+}
+
+function clearCartConfirm() {
+  if (confirm('Clear all items from cart?')) {
+    saveCart([]);
+    renderCart();
+    updateCartBadge();
+    showToast('Cart cleared.', 'info');
+  }
+}
+
+function checkout() {
+  showToast('🛒 Payment gateway integration coming soon! Your cart is saved.', 'info');
+}
+
+/* ── Init ── */
+requireAuth(() => {
+  renderProducts();
+  renderCart();
+  updateCartBadge();
+});
+</script>
+</body>
+</html>
